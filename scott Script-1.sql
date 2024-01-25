@@ -1,3 +1,4 @@
+
 -- scott
 
 
@@ -517,29 +518,258 @@ SELECT EMPNO , ENAME, COMM,
 	   END AS COMM_TEXT
 FROM EMP e ;
 
---하루 근무시간 8시간 근무일수 21.5
+--1.하루 근무시간 8시간 근무일수 21.5
 SELECT EMPNO ,ENAME, SAL ,
 		TRUNC(SAL /21.5, 2) AS DAY_PAY,
 		ROUND((SAL / 21.5)/8, 1) AS TIME_PAY
 FROM EMP e ;
-
+----------------2.
 SELECT EMPNO ,ENAME ,HIREDATE ,
 		TO_CHAR(NEXT_DAY( ADD_MONTHS(HIREDATE, 3), '월요일'), 'YYYY-MM-DD') AS R_JOB,
 		NVL(TO_CHAR(COMM),'N/A') AS COMM 
 FROM EMP e ;
+-----------3.
+SELECT EMPNO ,ENAME ,MGR ,
+		CASE WHEN MGR LIKE '75%' THEN '5555'
+		WHEN MGR LIKE '76%' THEN '6666'
+		WHEN MGR LIKE '77%' THEN '7777'
+		WHEN MGR LIKE '78%' THEN '8888'
+		WHEN MGR IS NULL THEN '0000'
+		ELSE TO_CHAR (MGR) 
+		END AS CHG_MGR
+FROM EMP e ;
+------------3. 간소화 SUBSTR(TO_CHAR(MGR(NUMBER값)),1,2)
+SELECT
+	EMPNO ,
+	ENAME ,
+	MGR ,
+		CASE
+		SUBSTR(TO_CHAR(NVL(MGR, 0)), 1, 2) 
+		WHEN '75' THEN '5555'
+		WHEN '76' THEN '6666'
+		WHEN '77' THEN '7777'
+		WHEN '78' THEN '8888'
+		WHEN '0' THEN '0000'
+		ELSE TO_CHAR (MGR) 
+		END AS CHG_MGR
+FROM EMP e ;
+
+SELECT EMPNO ,ENAME ,MGR ,
+       DECODE(SUBSTR(TO_CHAR(MGR), 1, 2) , NULL, '0000', '75', '5555', '76', '6666', '77', '7777', '78', '8888', SUBSTR(TO_CHAR(MGR),1)) AS CHG_MGR 
+FROM EMP e ;
+
+----행 하나를 처리하는 함수 : 단일 행 함수(지금까지 한 함수들)
+
+--다중 행 함수 : 한번에 여러 행의 데이터를 처리하는 함수
+--SUM(), AVG(), COUNT(), MEX(), MIN()
+--에러 '단일 그룹의 그룹 함수가 아닙니다.' (여러 행이 나올 수 있는 컬럼을 추가한 경우)
+SELECT SUM(SAL) ,TRUNC( AVG(SAL), 2) ,COUNT(SAL),MAX(SAL), MIN(SAL), MAX(SAL)-MIN(SAL) --,ENAME(단일 그룹의 그룹함수가 아닙니다.) 
+FROM EMP e ;
+
+--동일한 급여(값)를 제외
+SELECT SUM(DISTINCT SAL) --전체 더하기
+FROM EMP e ;
+
+SELECT COUNT(*) 
+FROM EMP e ;
+
+--부서 번호 30번인 사원 수
+SELECT COUNT(DEPTNO) , COUNT(*) 
+FROM EMP e 
+WHERE DEPTNO =30;
+
+--부서 번호가 30인 사원 중에서 급여의 최대값
+SELECT MAX(SAL) 
+FROM EMP e 
+WHERE DEPTNO =30;
+
+--부서 번호가 20인 사원의 입사일 중에서 제일 최근 입사일, 제일 오래된 입사일 조회
+SELECT MAX(HIREDATE) ,MIN(HIREDATE) 
+FROM EMP e 
+WHERE DEPTNO =20;
+
+--부서 번호가 30인 사원 중에서 sal 중복값 제거한 후 평균
+SELECT AVG(DISTINCT SAL) 
+FROM EMP e 
+WHERE DEPTNO =30;
+
+--부서별 급여 합계
+SELECT '10' AS DEPTNO SUM(SAL) 
+FROM EMP e 
+WHERE DEPTNO = 10
+UNION 
+SELECT '20' AS DEPTNO SUM(SAL) 
+FROM EMP e 
+WHERE DEPTNO = 20
+UNION
+SELECT '30' AS DEPTNO SUM(SAL) 
+FROM EMP e 
+WHERE DEPTNO = 30;
+
+--결과 값을 원하는 열로 묶기 : GROUP BY //에러 GROUP BY 표현식이 아닙니다. GROUP BY 옆에오는 컬럼만 SELECT 절에 사용 가능
+SELECT 보고싶은 컬럼(열이름)
+FROM (테이블명)
+WHERE (조건들 나열)
+GROUP BY (그룹화할 열 이름) (HAVING 선택) 
+ORDER BY (정렬조건)
+
+--시스템 작동 순서 2 FROM -> 3 WHERE-> 4 GROUP BY-> HAVING-> 1 SELECT -> 5 ORDER BY
+
+SELECT DEPTNO ,SUM(SAL)  
+FROM EMP e 
+GROUP BY DEPTNO ;
+
+SELECT DEPTNO ,ROUND( AVG(SAL),3 )
+FROM EMP e 
+GROUP BY DEPTNO 
+ORDER BY AVG(SAL); 
+
+--부서번호, 직무별 급여 평균
+SELECT DEPTNO ,JOB ,AVG(SAL) 
+FROM EMP e 
+GROUP BY DEPTNO ,JOB 
+ORDER BY DEPTNO;
+
+--HAVING : GROUP BY 절에 조건을 사용할 때
+--부서별 직책의 평균 급여가 500 이상인 사원들의 부서번호, 직책, 부서별 직책 평균급여
+SELECT DEPTNO ,JOB , AVG(SAL) 
+FROM EMP e 
+GROUP BY DEPTNO ,JOB  HAVING AVG(SAL) >=500
+ORDER BY DEPTNO ,JOB ;
+
+SELECT DEPTNO ,JOB , AVG(SAL) 
+FROM EMP e 
+WHERE SAL <=3000
+GROUP BY DEPTNO ,JOB  HAVING AVG(SAL) >=2000
+ORDER BY DEPTNO ,JOB ;
+
+-- 같은 직무에 종사하는 사원이 3명 이상인 직무와 인원수 출력
+SELECT JOB ,COUNT(EMPNO) 
+FROM EMP e 
+GROUP BY JOB HAVING COUNT(EMPNO)>=3
+ORDER BY JOB;
+
+--사원들의 입사연도를 기준으로 부서별 몇명이 입사했는지 조회
+--년도 -- 부서번호 -- 입사인원수
+SELECT TO_CHAR(HIREDATE, 'yyyy') , DEPTNO ,COUNT(*) AS 인원수
+FROM EMP e 
+GROUP BY TO_CHAR(HIREDATE,'yyyy') , DEPTNO 
+ORDER BY DEPTNO;
+
+SELECT TO_CHAR(HIREDATE, 'yyyy')  ,COUNT(*) AS 인원수
+FROM EMP e 
+GROUP BY TO_CHAR(HIREDATE,'yyyy') 
+
+----------empno 행에 deptno 데이터가 밑으로 출력됨.
+SELECT EMPNO
+FROM EMP e 
+UNION
+SELECT DEPTNO 
+FROM DEPT d ;
+-----------
+-- JOIN : 여러 테이블을 하나의 테이블처럼 사용하기 위해 사용
+-- 1. 내부조인 (일치하는 값이 있는 경우)
+--에러 열의 정의가 애매합니다.//별칭 사용.// DEPTNO가 EMP테이블에도 있고, DEPT 테이블에도 있기떄문.
+SELECT ENAME, SAL, DEPTNO , DNAME ,LOC 
+FROM EMP e ,DEPT d 
+WHERE e.DEPTNO = d.DEPTNO ;
+
+SELECT e.ENAME, e.SAL ,e.EMPNO , d.DNAME ,d.LOC 
+FROM EMP e ,DEPT d 
+WHERE e.DEPTNO = d.DEPTNO AND e.SAL >=3000;
+
+--조인 조건을 주지 않을 경우 나올 수 있는 모든 조합이 결과로 출력됨
+SELECT e.ENAME, e.SAL ,e.EMPNO , d.DNAME ,d.LOC 
+FROM EMP e ,DEPT d ;
+
+--SQL-99 표준 구문.
+SELECT e.ENAME, e.SAL ,e.EMPNO , d.DNAME ,d.LOC 
+FROM EMP e JOIN DEPT d ON e.DEPTNO = d.DEPTNO 
+WHERE e.SAL >=3000;
 
 
+--EMP, SALFRADE 비 등가(내부) 조인.
+SELECT DISTINCT *
+FROM EMP e ,SALGRADE s 
+WHERE e.SAL BETWEEN s.LOSAL AND s.HISAL ;
+
+--EMP, EMP 조인(SELF JOIN)
+SELECT e.EMPNO,e.ename,e2.MGR ,e2.ENAME AS MGR_NAME 
+FROM EMP e ,EMP e2 
+WHERE e.MGR = e2.EMPNO ; -- mgr이 NULL 인 항목은 표시x
+
+-- 2. 외부조인
+--  1) 왼쪽 외부조인 : LEFT OUTER JOIN
+--  2) 오른쪽 외부조인 : RIGHT OUTER JOIN
+-- 일치하지 않는 정보를 어느 테이블 정보를 기준으로 표시할지 결정
+SELECT e.EMPNO,e.ename,e.MGR ,e2.ENAME AS MGR_NAME 
+FROM EMP e LEFT OUTER JOIN EMP e2 ON e.MGR = e2.EMPNO ;
+
+SELECT e.EMPNO,e.ename,e.MGR ,e2.ENAME AS MGR_NAME 
+FROM EMP e RIGHT OUTER JOIN EMP e2 ON e.MGR = e2.EMPNO ;
+
+--각 부서별 평균 급여, 최대 급여, 최소 급여, 사원 수
+-- 부서번호, 부서명(d), 평균 급여, 최대 급여, 최소 급여, 사원 수
+SELECT e.DEPTNO, d.DNAME  ,MIN(sal), MAX(sal), AVG(sal), COUNT(*) 
+FROM EMP e JOIN DEPT d ON e.DEPTNO =d.DEPTNO  
+GROUP BY e.DEPTNO,d.DNAME ;
+
+-- 세 개의 테이블 조인하기
+SELECT *
+FROM
+	EMP e1
+JOIN EMP e2 ON
+	e1.empno = e2.EMPNO
+JOIN EMP e3 ON
+	e2.empno = E3.EMPNO ;
+-- EMP 테이블 전체가 3번 출력됨.
+
+--모든 부서 정보와 사원 정보를 출력
+--부서번호, 사원 이름 순으로 정렬하여 출력
+--부서번호, 부서명, 사원번호, 사원명, 직무명, 급여
+--dept 테이블 기준으로 출력
+SELECT d.DEPTNO , d.DNAME ,e.EMPNO ,e.ENAME, e.JOB ,e.SAL  
+FROM DEPT d JOIN EMP e ON d.DEPTNO =e.DEPTNO --d테이블과,e테이블에 있는것중 같은것만 출력
+ORDER BY d.DEPTNO ,e.ENAME ;
+
+SELECT d.DEPTNO , d.DNAME ,e.EMPNO ,e.ENAME, e.JOB ,e.SAL  
+FROM DEPT d LEFT OUTER JOIN EMP e ON d.DEPTNO =e.DEPTNO -- OUTER 생략가능
+ORDER BY d.DEPTNO ,e.ENAME ;
+
+SELECT d.DEPTNO , d.DNAME ,e.EMPNO ,e.ENAME, e.JOB ,e.SAL  
+FROM EMP e  RIGHT JOIN DEPT d ON d.DEPTNO =e.DEPTNO -- OUTER 생략가능
+ORDER BY d.DEPTNO ,e.ENAME ;
+
+--모든 부서 정보와 사원 정보를 출력
+--부서번호, 사원 이름 순으로 정렬하여 출력
+--부서번호, 부서명, 사원번호, 사원명, 직무명, 급여, LOSAL, HISAL, GRADE
+--dept 테이블 기준으로 출력
+SELECT d.DEPTNO , d.DNAME ,e.EMPNO , e.ENAME, e.JOB ,e.SAL ,s.LOSAL ,s.HISAL ,s.GRADE  
+FROM DEPT d LEFT JOIN EMP e ON d.DEPTNO =e.DEPTNO LEFT JOIN SALGRADE s ON e.SAL BETWEEN s.LOSAL AND s.HISAL
+ORDER BY d.DEPTNO ,e.ENAME ;
 
 
+SELECT
+	d.DEPTNO ,
+	d.DNAME ,
+	e.EMPNO ,
+	e.ENAME,
+	e.JOB ,
+	e.SAL ,
+	s.LOSAL ,
+	s.HISAL ,
+	s.GRADE
+FROM
+	DEPT d
+LEFT OUTER JOIN EMP e ON
+	d.DEPTNO = e.DEPTNO
+LEFT OUTER JOIN SALGRADE s ON
+	e.SAL BETWEEN s.LOSAL AND s.HISAL
+ORDER BY
+	d.DEPTNO ,
+	e.ENAME ;
 
-
-
-
-
-
-
-
-
+asdfasdasfasdf
 
 
 
