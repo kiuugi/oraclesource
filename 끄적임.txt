@@ -1,6 +1,7 @@
 SELECT (DISTINCT (중복 데이터 삭제)) (출력할 데이터) 
-FROM (데이터 위치)
+FROM (조인할 테이블 명) join (조인할 두번째 테이블 명) on 조건 and 조건
 WHERE (조건) // (=, <, >, +, * ...), OR, AND, (NOT) IN (NOT IN = (!=, ^=, <>)), (NOT) BETWEEN (A) AND (B),
+GROUP BY (그룹화 할 열 이름) (HAVING (조건)AND(조건)선택)
 ORDER BY (정렬) // ASC, DESC
 ----------------
 as (별칭)
@@ -64,8 +65,134 @@ NVL2(널인지 검사할 열이름(데이터), NULL이 아닌 경우 반환 데�
 
 DCODE(검사대상, 조건1, 조건1이 참일경우 반환할 결과, 조건2, 조건2 가 참일때 반환할 결과, ... , 조건1 ~ 조건n 일치하지 않는 경우 반환할 결과)
 CASE (검사대상) WHEN '조건1' THEN '조건1이 참일경우 반환할 결과' ... ELSE '조건1 ~ 조건n 일치하지 않는 경우 반환할 결과' END
+//CASE () WHEN () THEN () ELSE () END
+
+SUM(), AVG(), COUNT(), MEX(), MIN()
+SELECT 절에 칼럼과 같이쓰는경우 GROUP BY 사용.
+
+JOIN : 두 개 이상의 테이블을 연결하여 하나의 테이블처럼 출력할 때 사용 // UNION은 밑으로 JOIN은 옆으로
+ 내부조인, 비 내부 조인, 자체조인
+내부조인 join ~on : =의 의미를 가지고있다. 서로의 테이블에서 같은 부분을 출력
+외부조인 : LEFT (OUTER 생략가능) JOIN,  RIGHT (OUTER) JOIN ~ ON --서로의 테이블에 다른 부분이 있어도 그대로 출력
+
+from 테이블,테이블 -- 조인되지 않고, 각각의 테이블 값을 출력
+from 테이블 join 테이블 on 조건 and (조건)
+
+서브쿼리 : 기존의 쿼리문 안에 ()를 써서 다른 SELECT문이 들어옴
+SQL 문 내부에서 SELECT 문을 사용
+괄호로 묶어서 사용
+서브쿼리의 셀렉 구문을 메인쿼리의 비교 대상과 같은 자료형과 같은 개수로 지정해야 한다.
+단일행 서브쿼리 연산자
+<, >, != 
+다중행 서브쿼리 연산자.
+IN,ANY (메인 쿼리의 조건식을 만족하는 서브쿼리가 하나이상)
+ALL (메인쿼리의 조건식을 서브쿼리의 결과 모두가 만족)
+EXISTS(서브쿼리의 결과가 존재하면)
+//메인쿼리의 WHERE절과 서브쿼리의 SELECT절을 동일하게 맞춰준다.
+//다중 열 서브쿼리의 경우 메인쿼리의 WHERE절을 ()로 묶어준다.
 
 
+INSERT INTO 테이블명 (열이름1, 열이름2, ...)
+VALUES(데이터, 데이터, ...) -- 데이터 타입을 맞춰준다.
+
+수정 
+UPDATE 테이블명 SET 수정할 내용, ... ;
+UPDATE 테이블명 SET 수정할 내용, ... WHERE 조건;
+
+삭제 (행단위 삭제)
+DELETE 테이블명, WHERE 조건
+DELETE FROM 테이블명 WHERE 조건
+
+-1. 테이블 생성
+ CREATE TABLE 테이블명 (필드명, 필드타입(크기), 제약조건) 
+
+열 이름(필드명) 규칙
+ 문자로 시작 / 30byte 이하로 작성 / 한 테이블 안 열(필드) 이름 중복 불가
+ 열 이름은 문자, 0-9, 특수문자 사용가능
+ sql 키워드(order, group, ...)는 열 이름으로 사용 불가 (사용은 가능)
+
+
+
+문자 1) CHAR 2) VARCHAR2 3) NCHAR 4) NBARCHAR 5) CLOB 6) NCLOB 8) LONG
+ char or varchar : 열의 너비가 고정값인지 가변인지.
+ char(10) : 'hong' => 10자리 다 사용
+ carchar2(10) : 'hong' => 입력된 글자에 따라 가변
+
+ varchar2, char 가 한글, 영문 입력 시 사용하는 바이트 수가 다름 
+ nchar, nvarchar 사용하는 바이트 수 통일해서 사용
+ nchar(10) : 'hong' => 유니코드 문자열 타입이고, 고정
+ nvarchar2(10) : 'hong' => 유니코드 문자열 타입이고, 가변
+
+ CLOB : 문자열 데이터를 외부 파일로 저장, 엄청 큰 텍스트 데이터 입력 시 사용(4GB)
+ LONG : 2GB
+
+숫자
+ NUMBER(젠체자릿수,소수점자릿수)
+ BINARY_FLOAT, BINARY_DOUBLE
+
+날짜
+ DATE, TIMESTAMP, 
+
+테이블 복사
+ CREATE TABLE EXAM_EMP AS SELECT * FROM EMP ;
+테이블 구조만 복사
+ CREATE TABLE EXAM_EMP AS SELECT * FROM EMP WHERE 1<>1;
+
+DDL : CREATE, ALTER
+2. 테이블 변경
+ 1. 열 추가 (ADD)
+ALTER  TABLE 테이블명 ADD 추가할 열 이름 테이터타입(10)
+
+ 2. 열 이름 변경(RENAME)
+ALTER TABLE 테이블명 RENAME COLUMN 기존이름 TO 변경이름
+
+ 3. 열 자료형 변경(MODIFY)
+ALTER TABLE 테이블명 MODIFY 열이름 테이터타입(20)
+
+ 4. 열 제거
+ ALTER TABLE 테이블명 DROP COLUMN 열이름;
+
+테이블 이름 변경
+ RENAME 변경전테이블명 TO 변경할테이블명
+
+VIEW :  가상테이블
+CREATE VIEW 뷰이름 AS (SELECT * FROM 원본 테이블명)
+편의성, 보안성 
+뷰는 권한을 가진 사용자만 생성할 수 있음
+뷰를 통해 테이터 삽입 시 원본에도 영향을 미침
+
+INDEX 생성, 삭제 
+INDEX(색인, 목차)
+INDEX : 기본키, 고유키 일 때 자동으로 생성됨
+ CREATE INDEX 인덱스명 ON 테이블명(인덱스로 사용할 필드명)
+
+시퀀스 생성/삭제 (오라클에만 있는 객체), 하나씩 증가하는 값이 필요 할 때 주로 사용
+다른 DB의 auto_increment 와 동일한 역할.
+ CREATE SEQUENCE 시퀀스명 INCREMENT BY 증감값 START WITH 최대값 MINVALUE 최소값 NOCYCLE CACHA 숫자
+
+
+
+
+
+
+COMMIT ; --최종반영
+ROLLBACK ; --COMMIT 하기 전 모든 작업 롤백
+LOCK : 한 세션에서 트랜잭션 작업이 완료되지 않으면 다른 세션에서 작업을 처리할 수 없는 상태
+
+oracle - commit, rollback 쉬운편
+mysql - mysql workbench 에디터 (auto commit상태임)
+
+에러 GROUP BY 표현식이 아닙니다.// GROUP BY 옆에오는 컬럼만 SELECT 절에 사용 가능
+에러 열의 정의가 애매합니다.//별칭 사용.// DEPTNO가 EMP테이블에도 있고, DEPT 테이블에도 있기떄문.
+에러 단일 행 하위 질의에 2개 이상의 행이 리턴되었습니다.// 서브쿼리가 여러 개의 결과값을 리턴하는데 단일행 서브쿼리에 사용하는 연산자가 사용된 경우
+에러 값의 수가 충분하지 않습니다.// 필드수와 데이터 가짓수가 다를경우
+에러 이 열에 대해 지정된 전체 자릿수보다 큰 값이 허용됩니다.//
+에러 부적합한 식별자 // 단순 오타일 가능성 있음.
+에러 권한이 불충분합니다//권한 뷰여를 따로 해줘야함. (보통 관리자가 함)
 
 ctrl + shift + y -> 소문자 변경.
 ctrl + shift + f -> 쿼리문 정렬
+
+ctel + d 다이어그램 복사
+
+-다이어그램 만드는 사이트 https://app.diagrams.net/

@@ -1,5 +1,6 @@
 -- scott 권한 부여
 GRANT CONNECT, resource TO scott;
+GRANT CREATE VIEW TO scott;
 -- 지금까지 한 일.
 -- 오라클 설치 DBMS = 데이터베이스 서버(요청을 받아들이는곳) SQL Plus 응용 프로그램도 같이 설치됨.
 -- DBeaver 섶치 - 오라클 서버 연결을 하고 SQL 문을 수행할 수 있도록 처리하는 편집기.

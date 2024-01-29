@@ -208,7 +208,6 @@ WHERE MANAGER_ID IS NOT NULL
 GROUP BY MANAGER_ID HAVING MIN(SALARY)>=6000 ;
 
 --각 사원별 소속 부서에서 자신의 담당 매니저의 고용일보다 빠른 입사자 찾기
-
 SELECT
 	e.employee_id AS "내사원번호",
 	e.hire_date AS "내입사일",
@@ -217,9 +216,12 @@ SELECT
 FROM
 	EMPLOYEES e
 JOIN EMPLOYEES e2 ON
-	e.manager_id = e2.EMPLOYEE_ID
+	e.manager_id = e2.EMPLOYEE_ID -- e2의 employee_id가 e의 manager_id
 	AND e.hire_date < e2.HIRE_DATE ;
-
+--
+SELECT e.employee_id, e2.EMPLOYEE_ID --e.manager_id
+FROM EMPLOYEES e JOIN EMPLOYEES e2 ON e.manager_id = e2.EMPLOYEE_ID ;
+--
 SELECT EMPLOYEE_ID ,MANAGER_ID 
 FROM EMPLOYEES e ;
 
@@ -264,12 +266,307 @@ SELECT DISTINCT
 	e.department_id AS 부서번호,
 	e.first_name || ' ' || e.last_name AS "내이름",
 	e.salary AS 내급여,
-	e.hire_date AS 내입사일
+	e.hire_date AS 내입사일,
+	e2.HIRE_DATE ,
+	e2.SALARY 
 FROM
 	EMPLOYEES e
 JOIN EMPLOYEES e2 ON
 	e.department_id = e2.DEPARTMENT_ID
 	AND e.salary < e2.SALARY AND e.hire_date < e2.HIRE_DATE ;
+
+--LAST_NAME 에 u가 포함되는 사원들과 동일 부서에 근무하는 사원들의 사번 및 last_name 조회
+--사번 오름차순
+SELECT
+	e.EMPLOYEE_ID ,
+	e.LAST_NAME
+FROM
+	EMPLOYEES e
+WHERE
+	DEPARTMENT_ID  IN (
+	SELECT
+		DISTINCT DEPARTMENT_ID
+	FROM
+		EMPLOYEES e
+	WHERE
+		LAST_NAME LIKE '%u%')
+ORDER BY e.EMPLOYEE_ID ;
+
+-- 기존의 직업을 여전히 가지고 있는 사원들의 사번 및 job_id 조회
+SELECT DISTINCT  e.EMPLOYEE_ID ,e.JOB_ID 
+FROM EMPLOYEES e JOIN JOB_HISTORY jh ON e.JOB_ID =jh.JOB_ID AND;
+
+
+SELECT
+	e.EMPLOYEE_ID ,
+	e.JOB_ID
+FROM
+	EMPLOYEES e
+WHERE
+	(e.EMPLOYEE_ID ,
+	e.JOB_ID ) IN (
+	SELECT
+		jh.employee_id,
+		jh.job_id
+	FROM
+		JOB_HISTORY jh);
+
+--SELECT 서브쿼리
+--각 직무별 연봉 총합 및 각 부서별 연봉 총합 조회
+-- JOB_ID, 부서별연봉총합, 전체 총합
+SELECT JOB_ID ,(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=10 AND e.JOB_ID=e2.job_id) AS DEPT10,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=20 AND e.JOB_ID=e2.job_id) AS DEPT20,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=30 AND e.JOB_ID=e2.job_id) AS DEPT30,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=40 AND e.JOB_ID=e2.job_id) AS DEPT40,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=50 AND e.JOB_ID=e2.job_id) AS DEPT50,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=60 AND e.JOB_ID=e2.job_id) AS DEPT60,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=70 AND e.JOB_ID=e2.job_id) AS DEPT70,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=80 AND e.JOB_ID=e2.job_id) AS DEPT80,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=90 AND e.JOB_ID=e2.job_id) AS DEPT90,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=100 AND e.JOB_ID=e2.job_id) AS DEPT100,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE DEPARTMENT_ID=110 AND e.JOB_ID=e2.job_id) AS DEPT110,
+(SELECT SUM(SALARY) FROM EMPLOYEES e2 WHERE e.JOB_ID=e2.job_id) AS total
+FROM EMPLOYEES e 
+GROUP BY JOB_ID
+ORDER BY JOB_ID ;
+
+--JOB_ID 가 SA_MAN 인 사원들의 최대 연봉보다 높게 받는 사원들의 LAST_NAME, JOB_ID, SALARY 조회
+SELECT
+	e.LAST_NAME ,
+	e.JOB_ID ,
+	e.SALARY
+FROM
+	EMPLOYEES e
+WHERE
+	SALARY > (
+	SELECT
+		MAX(SALARY)
+	FROM
+		EMPLOYEES e
+	WHERE
+		JOB_ID = 'SA_MAN' );
+
+--커미션을 버는 사원들의 부서와 연봉이 동일한 사원들의 LAST_NAME, 부서번호, 연봉조회
+SELECT
+	e.LAST_NAME ,
+	e.DEPARTMENT_ID ,
+	e.SALARY
+FROM
+	EMPLOYEES e
+WHERE
+	(e.DEPARTMENT_ID ,
+	e.SALARY) IN (
+	SELECT
+		e.DEPARTMENT_ID ,
+		e.SALARY
+	FROM
+		EMPLOYEES e
+	WHERE
+		COMMISSION_PCT IS NOT NULL ) ;
+
+--회사 전체 평균 연봉보다 더 많이 버는 사원들 중 LAST_NAME에 u가 있는 사원들이 근무하는 부서에서 근무하는 사원들의 사번, last_name, 연봉 조회
+
+	
+SELECT
+	EMPLOYEE_ID ,
+	LAST_NAME ,
+	SALARY
+FROM
+	EMPLOYEES e
+WHERE
+	DEPARTMENT_ID  IN (
+	SELECT DISTINCT 
+		e.DEPARTMENT_ID ,
+	FROM
+		EMPLOYEES e
+	WHERE
+		SALARY > (
+		SELECT
+			AVG(SALARY)
+		FROM
+			EMPLOYEES e)
+		AND LAST_NAME LIKE '%u%') ;
+
+--각 부서별 평균 연봉보다 더 받는 동일 부서 근무 사원들의  LAST_NAME, 부서번호, 연봉 및 해당 부서의 평균 연봉 조회
+--부서별 연봉을 기준으로 정렬()
+SELECT
+	e1.LAST_NAME ,e1.DEPARTMENT_ID ,e1.SALARY ,e2.DEPT_SAL_AVG
+FROM
+	EMPLOYEES e1 ,
+	(
+	SELECT
+		DEPARTMENT_ID ,
+		AVG(SALARY) AS DEPT_SAL_AVG
+	FROM
+		EMPLOYEES e
+	GROUP BY
+		DEPARTMENT_ID) e2
+WHERE e1.DEPARTMENT_ID = e2.DEPARTMENT_ID AND e1.SALARY > e2.DEPT_SAL_AVG 
+ORDER BY DEPARTMENT_ID;
+
+--last_name 이 Davies 인 사람보다 후에 고용된 사원들의 last_name, hire_data 조회
+SELECT e.LAST_NAME ,e.HIRE_DATE 
+FROM EMPLOYEES e 
+WHERE HIRE_DATE > (SELECT HIRE_DATE FROM EMPLOYEES e WHERE e.LAST_NAME = 'Davies');
+
+--last_name 이 King 인 사원을 매니저로 두고 있는 모든 사원들의 last_name, salary 조회
+SELECT e.LAST_NAME ,e.SALARY 
+FROM EMPLOYEES e 
+WHERE e.MANAGER_ID  IN (SELECT e.EMPLOYEE_ID  FROM EMPLOYEES e WHERE e.LAST_NAME = 'King');
+
+--last_name 이 kochhar 인 사원과 동일한 연봉 및 커미션을 버는 사원들의 last_name, 부서번호, salary 조회
+--kochhar 은 제외한다.
+SELECT
+	e.LAST_NAME ,
+	e.DEPARTMENT_ID ,
+	e.SALARY
+FROM
+	EMPLOYEES e
+WHERE
+	e.COMMISSION_PCT = (
+	SELECT
+		e.COMMISSION_PCT
+	FROM
+		EMPLOYEES e
+	WHERE
+		e.LAST_NAME = 'Kochhar')
+	AND e.SALARY =(
+	SELECT
+		e.SALARY
+	FROM
+		EMPLOYEES e2
+	WHERE
+		e.LAST_NAME = 'Kochhar');
+	
+SELECT LAST_NAME ,DEPARTMENT_ID ,SALARY 
+FROM EMPLOYEES e 
+WHERE (SALARY, NVL(COMMISSION_PCT,0)) IN (SELECT SALARY ,NVL(COMMISSION_PCT, 0) 
+FROM EMPLOYEES e 
+WHERE LAST_NAME ='Kochhar') AND e.LAST_NAME !='kochhar';
+	
+
+--부서가 위치한 국가 ID, 국가 이름 조회
+--countries 테이블과 locations, departments 이용
+SELECT
+	c.COUNTRY_ID ,
+	c.COUNTRY_NAME
+FROM
+	COUNTRIES c
+WHERE
+	c.COUNTRY_ID IN 
+(
+	SELECT
+		l.COUNTRY_ID
+	FROM
+		LOCATIONS l ,
+		(
+		SELECT
+			LOCATION_ID
+		FROM
+			DEPARTMENTS d ) D
+	WHERE
+		l.LOCATION_ID = D.LOCATION_ID);
+	
+--총 사원 수 및 2013,2014,2015,2016 년도 별 고용된 사원들의 총 수를 조회한다.
+--SELECT COUNT(*) FROM EMPLOYEES e  WHERE TO_CHAR(HIRE_DATE,'yy')='13';
+--SELECT COUNT(*) FROM EMPLOYEES e  WHERE HIRE_DATE LIKE '13%'; 
+	
+SELECT
+	DISTINCT (
+	SELECT
+		COUNT(*)
+	FROM
+		EMPLOYEES e) AS total_emp,
+	(
+	SELECT
+		COUNT(*)
+	FROM
+		EMPLOYEES e
+	WHERE
+		TO_CHAR(hire_date, 'yy')= '13') AS "2013",
+		(
+	SELECT
+		COUNT(*)
+	FROM
+		EMPLOYEES e
+	WHERE
+		TO_CHAR(hire_date, 'yy')= '14') AS "2014",
+		(
+	SELECT
+		COUNT(*)
+	FROM
+		EMPLOYEES e
+	WHERE
+		TO_CHAR(hire_date, 'yy')= '15') AS "2015",
+		(
+	SELECT
+		COUNT(*)
+	FROM
+		EMPLOYEES e
+	WHERE
+		TO_CHAR(hire_date, 'yy')= '16') AS "2016"
+FROM
+	EMPLOYEES e ;
+
+
+SELECT TO_CHAR(e.HIRE_DATE, 'YYYY'), COUNT(e.EMPLOYEE_ID) 
+FROM EMPLOYEES e 
+GROUP BY TO_CHAR(e.HIRE_DATE, 'YYYY') 
+
+--위치 ID가 1700인 사원들의 연봉과 커미션을 추출한 뒤, 추출된 사원들의 연봉과 커미션이 동일한 사원정보 조회
+--사원번호, 이름(first+last 결합), 부서번호, 급여 출력
+SELECT e.EMPLOYEE_ID ,e.FIRST_NAME || ' ' || e.LAST_NAME , e.DEPARTMENT_ID ,e.SALARY 
+FROM EMPLOYEES e 
+WHERE(SALARY, NVL(COMMISSION_PCT,0)) IN 
+(
+SELECT SALARY ,NVL(COMMISSION_PCT ,0)
+FROM EMPLOYEES e 
+WHERE DEPARTMENT_ID IN 
+(
+SELECT d.DEPARTMENT_ID 
+FROM DEPARTMENTS d 
+WHERE d.LOCATION_ID =1700))
+
+--
+
+SELECT * FROM EMPLOYEES e WHERE FIRST_NAME ='Jack'; 
+--테이블생성 - 구조, 데이터 복사
+CREATE TABLE idx_employees AS SELECT DISTINCT first_name, last_name, hire_date FROM EMPLOYEES;
+
+--idx 생성
+CREATE INDEX idx_name ON idx_employees(first_name);
+
+--index 사용해서 조회 => range scan
+SELECT * FROM IDX_EMPLOYEES WHERE first_name='Jack';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
