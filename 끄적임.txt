@@ -169,10 +169,57 @@ INDEX : 기본키, 고유키 일 때 자동으로 생성됨
 시퀀스 생성/삭제 (오라클에만 있는 객체), 하나씩 증가하는 값이 필요 할 때 주로 사용
 다른 DB의 auto_increment 와 동일한 역할.
  CREATE SEQUENCE 시퀀스명 INCREMENT BY 증감값 START WITH 최대값 MINVALUE 최소값 NOCYCLE CACHA 숫자
+시퀀스는 테이블에 속한 객체가 아닌 따로 만들어낸 수식 // 실행시킨 구문이 에러가났을 경우에도 실행됨.
+
+ 제약조건 
+  테이블의 특정 열에 지정
+  1. NOT NULL : 열에 null을 허용하지 않음 // 컬럼명 뒤에 NOT NULL을 붙임
+  2. UNIQUE : 지정한 열이 유일한 값을 가져야 함(NULL은 중복을 따지지 않음) 컬럼명 뒤에 붙임
+  3. PRIMARY KEY : 지정한 열이 유일한 값이면서 NULL을 허용하지 않음 (테이블당 하나만 지정)
+  4. FOREIGN KEY : 다른 테이블의 열을 참조하여 존재하는 값만 입력
+  5. CHECK : 설정한 조건식을 만족하는 데이터만 입력
+
+ 3. PRIMARY KEY (PK) : 기본키
+	기본키가 인덱스 설정 자동으로 만들어짐
+	NOT NULL + UNIQUE => 회원아이디, 이메일, 상품코드, 게시판 글번호
+
+ 4. FOREIGN KEY (외래키) : 특정 테이블의 기본키로 지정한 열을 다른 테이블의 특정 열에서 참조
+    1. ON DELETE CASCADE : 부모가 삭제되면 자식도 같이 삭제
+    2. ON DELETE SET NULL : 부모가 삭제되면 자식이 참조하는 부모의 값을 NULL로 변경
+       REFERENCES 테이블 
+ 5. CHECK : 열에 저장할 수 있는 값의 범위 혹은 패턴 정의 // 열에 넣기전에 검사
+
+ DEFAULT : 특정 열에 값이 지정되지 않았을 때 기본값 주기
 
 
+ DBA 권한을 가진 사용자만 사용자를 생성하고 권한을 부여 가능.
+ SYSTEM, sys as sysdba 
+ CREATE USER 아이디 IDENTIFIED BY 비밀번호 ;
+ 공통 사용자 또는 롤 이름이 부적합합니다. // C## 를 아이디앞에붙임 오라클 21c xe버전에서 있는 요청사항
 
+ CREATE SESSION 권한을 가지고 있지 않음; 로그온 거절
+권한부여 
+ SESSION, CREATE(USER, TABLE, SEQUENCE, VIEW, ...)
+ 권한 그룹 => 롤
+ CONNECT, RESOURCE
+ CONNECT(SESSION, CREATE TABLE, CREATE VIEW, ...)
+ RESOURCE(SEQUENCE, 프로시저, 테이블, ...)
 
+ GRANT 권한이름, ... TO 사용자아이디
+ GRANT 롤이름, ... TO 사용자아이디
+//
+CREATE USER C##test2 IDENTIFIED BY test
+DEFAULT TABLESPACE users
+TEMPORARY TABLESPACE TEMP
+QUOTA 10M ON USERS;
+
+GRANT CONNECT, resource TO C##test2;
+// 아이디 생성.
+
+REVOKE 취소할 권한 이름, ... FROM 권한을 뺏을 유져 아이디
+
+ 비밀번호 변경
+ ALTER USER 유저아이디 IDENTIFIED BY 비밀번호;
 
 
 COMMIT ; --최종반영
@@ -188,11 +235,17 @@ mysql - mysql workbench 에디터 (auto commit상태임)
 에러 값의 수가 충분하지 않습니다.// 필드수와 데이터 가짓수가 다를경우
 에러 이 열에 대해 지정된 전체 자릿수보다 큰 값이 허용됩니다.//
 에러 부적합한 식별자 // 단순 오타일 가능성 있음.
-에러 권한이 불충분합니다//권한 뷰여를 따로 해줘야함. (보통 관리자가 함)
+에러 권한이 불충분합니다//권한 뷰여를 따로 해줘야함. (보통 관리자가 함) // GRANT 부여할권리 TO 부여될유져
+에러 NULL을 ("SCOTT"."TBL_NOTNULL"."LOGIN_PWD") 안에 삽입할 수 없습니다 // null을 삽입할 수 없는 곳에 하려고함.
+에러 무결성 제약 조건(SCOTT.SYS_C008363)에 위배됩니다 // UNIQUE 제약조건을 위배함//데이터 무결성 : 데이터 정확성, 일관성을 보장해야함
+에러 무결성 제약조건(SCOTT.EMPFK_DEPTNO_FK)이 위배되었습니다- 부모 키가 없습니다 // 참조 대상 테이블에 데이터 INSERT
+에러 무결성 제약조건(SCOTT.EMPFK_DEPTNO_FK)이 위배되었습니다- 자식 레코드가 발견되었습니다 // 참조하는 테이블의 자식 DELETE
+에러 체크 제약조건(SCOTT.TBLCK_PWD_CK)이 위배되었습니다
+
 
 ctrl + shift + y -> 소문자 변경.
 ctrl + shift + f -> 쿼리문 정렬
 
 ctel + d 다이어그램 복사
 
--다이어그램 만드는 사이트 https://app.diagrams.net/
+-다이어그램 만드는 사이트 https://app.diagrams.net/ㄴ
